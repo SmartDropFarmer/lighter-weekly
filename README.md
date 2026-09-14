@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lighter Weekly
 
-## Getting Started
+An independent dashboard for reviewing Robinhood Lighter trading activity by campaign week. It resolves linked accounts from a wallet address, calculates eligible volume from public explorer logs, stores cumulative point snapshots locally, and creates customizable share cards.
 
-First, run the development server:
+## Features
+
+- Wallet-based lookup with linked sub-account discovery
+- Current, historical and total campaign volume
+- Manual cumulative point snapshots with automatic weekly differences
+- Local JSON backup and restore for saved points
+- Bearish, neutral and bullish hypothetical LIT value scenarios
+- Downloadable 16:9 share cards
+- Weekly strategy and referral links from Smart Drop Farmer
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local` and set:
 
-## Learn More
+```text
+NEXT_PUBLIC_SITE_URL=https://your-production-domain.example
+```
 
-To learn more about Next.js, take a look at the following resources:
+The active dashboard uses public Robinhood Lighter endpoints and does not require a private trading token.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data model and limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Program activity begins on 10 August 2026 at 00:00 UTC.
+- Dashboard weeks use Friday 18:00 UTC boundaries.
+- Closed-week explorer responses are cached; the current period remains short-lived.
+- A response marked `dataCompleteness: "partial"` reached the explorer history safety limit and must not be treated as a complete total.
+- Points are entered manually and stored only in the current browser under a wallet-specific key.
+- Price scenarios are hypothetical and are not financial advice or guaranteed allocations.
 
-## Deploy on Vercel
+Point value is estimated as:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+(community pool in LIT / projected total program points) × estimated LIT price
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Projected total program points are calculated from the selected campaign end month and weekly point issuance assumption.
+
+## Quality checks
+
+```bash
+npm run lint
+npm run build
+npm audit --omit=dev
+```
+
+## Deployment
+
+The app can be imported into Vercel from a GitHub repository. Set `NEXT_PUBLIC_SITE_URL` to the final HTTPS domain before the production build. Review third-party logo and illustration permissions before public or commercial distribution.
+
+## Independence
+
+This is an independent analytics tool. It is not an official Robinhood or Lighter product. Robinhood and Lighter names and marks belong to their respective owners.
