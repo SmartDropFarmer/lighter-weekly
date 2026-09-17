@@ -6,6 +6,7 @@ const PROGRAM_START = Date.UTC(2026, 7, 10);
 const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 14, 18);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_PAGES_PER_ACCOUNT = 30;
+const PAGE_BATCH_SIZE = 4;
 const REQUEST_TIMEOUT_MS = 10_000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_REQUESTS = 24;
@@ -88,6 +89,28 @@ function currentWeekStart(now: Date) {
   return start.getTime();
 }
 
+async function fetchExplorerPage(accountIndex: number, offset: number, typeQuery: string, cacheHistorical: boolean) {
+  const url = `${EXPLORER_BASE_URL}/accounts/${accountIndex}/logs?limit=100&offset=${offset}&${typeQuery}`;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        cache: cacheHistorical ? "force-cache" : "no-store",
+        next: cacheHistorical ? { revalidate: 3600 } : undefined,
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      if (!response.ok) return null;
+      const logs = (await response.json()) as ExplorerLog[];
+      return Array.isArray(logs) ? logs : null;
+    } catch {
+      if (attempt === 1) return null;
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (exceedsRateLimit(request)) {
@@ -134,29 +157,46 @@ export async function GET(request: NextRequest) {
     let truncated = false;
 
     for (const account of accounts) {
-      for (let page = 0; page < MAX_PAGES_PER_ACCOUNT; page += 1) {
-        const offset = page * 100;
-        const url = `${EXPLORER_BASE_URL}/accounts/${account.index}/logs?limit=100&offset=${offset}&${typeQuery}`;
-        const response = await fetch(url, {
-          cache: week === 0 || isTotal ? "no-store" : "force-cache",
-          next: week === 0 || isTotal ? undefined : { revalidate: 3600 },
-          headers: { Accept: "application/json" },
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        });
-        if (!response.ok) break;
-        const logs = (await response.json()) as ExplorerLog[];
-        pagesFetched++;
-        if (!Array.isArray(logs) || logs.length === 0) break;
+      let accountComplete = false;
 
-        let oldest = Number.POSITIVE_INFINITY;
-        for (const log of logs) {
-          const trade = getTrade(log, accountIndexes);
-          if (!trade) continue;
-          oldest = Math.min(oldest, trade.timestamp);
-          if (trade.timestamp >= periodStart && trade.timestamp < periodEnd) trades.set(trade.id, trade);
+      for (let batchStart = 0; batchStart < MAX_PAGES_PER_ACCOUNT && !accountComplete; batchStart += PAGE_BATCH_SIZE) {
+        const pages = Array.from(
+          { length: Math.min(PAGE_BATCH_SIZE, MAX_PAGES_PER_ACCOUNT - batchStart) },
+          (_, index) => batchStart + index,
+        );
+        const batch = await Promise.all(
+          pages.map((page) => fetchExplorerPage(account.index, page * 100, typeQuery, week > 0 && !isTotal)),
+        );
+
+        for (let index = 0; index < batch.length; index += 1) {
+          const logs = batch[index];
+          const page = pages[index];
+          if (!logs) {
+            truncated = true;
+            accountComplete = true;
+            break;
+          }
+
+          pagesFetched++;
+          if (logs.length === 0) {
+            accountComplete = true;
+            break;
+          }
+
+          let oldest = Number.POSITIVE_INFINITY;
+          for (const log of logs) {
+            const trade = getTrade(log, accountIndexes);
+            if (!trade) continue;
+            oldest = Math.min(oldest, trade.timestamp);
+            if (trade.timestamp >= periodStart && trade.timestamp < periodEnd) trades.set(trade.id, trade);
+          }
+
+          if (logs.length < 100 || oldest < periodStart) {
+            accountComplete = true;
+            break;
+          }
+          if (page === MAX_PAGES_PER_ACCOUNT - 1) truncated = true;
         }
-        if (logs.length < 100 || oldest < periodStart) break;
-        if (page === MAX_PAGES_PER_ACCOUNT - 1) truncated = true;
       }
     }
 
