@@ -60,6 +60,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .period-heading strong, .period-heading span { display: block; }
 .period-heading strong { margin-bottom: 6px; font-size: 12px; }
 .period-heading span { color: var(--muted); font-size: 8px; }
+.period-heading em { display: block; margin-top: 6px; color: var(--green); font-size: 7px; font-style: normal; letter-spacing: .04em; }
 .period-selector { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .period-button { min-width: 62px; height: 29px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; color: #aeb4af; background: #14181e; font-size: 9px; font-weight: 700; }
 .period-button:hover { border-color: #53675a; color: var(--ink); }

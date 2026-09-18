@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const PROGRAM_START = Date.UTC(2026, 7, 10);
-const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 14, 18);
+const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 12);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const REFERRAL_URL = "https://robinhoodchain.lighter.xyz/?referral=SMART&source=none";
 const TWITTER_URL = "https://x.com/SmartDropFarmer";
@@ -76,14 +76,22 @@ function formatPeriod(from: string, to: string) {
   const format = new Intl.DateTimeFormat("en-US", {
     day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
   });
-  return `${format.format(new Date(from))} — ${format.format(new Date(to))} UTC`;
+  const rawEnd = new Date(to);
+  const displayEnd = rawEnd.getUTCHours() === 0 && rawEnd.getUTCMinutes() === 0 && rawEnd.getUTCSeconds() === 0
+    ? new Date(rawEnd.getTime() - 1)
+    : rawEnd;
+  return `${format.format(new Date(from))} — ${format.format(displayEnd)} UTC`;
 }
 
 function formatCardPeriod(from: string, to: string) {
   const format = new Intl.DateTimeFormat("en-US", {
     day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
   });
-  return `${format.format(new Date(from))} — ${format.format(new Date(to))}`;
+  const rawEnd = new Date(to);
+  const displayEnd = rawEnd.getUTCHours() === 0 && rawEnd.getUTCMinutes() === 0 && rawEnd.getUTCSeconds() === 0
+    ? new Date(rawEnd.getTime() - 1)
+    : rawEnd;
+  return `${format.format(new Date(from))} — ${format.format(displayEnd)}`;
 }
 
 export default function Home() {
@@ -328,7 +336,7 @@ export default function Home() {
         : ["Building your summary", "Calculating volume, active days and market breakdown."];
   const metrics = data ? [
     [range === "total" ? "Total volume" : "Weekly volume", compactMoney.format(data.summary.volume), "Eligible notional traded"],
-    [range === "total" ? "Total points" : "Weekly points", pointsValue, range === "total" ? latestPoints === null ? "Add your first points snapshot below" : `Updated after Week ${savedWeeks[0]}` : week === 0 ? "Distributed after the week closes" : weeklyPoints === null ? "Add consecutive totals to calculate this week" : "Calculated from your saved totals"],
+    [range === "total" ? "Total points" : "Weekly points", pointsValue, range === "total" ? latestPoints === null ? "Add your first points snapshot below" : `Updated after Week ${savedWeeks[0]}` : week === 0 ? "Distributed on Friday after the week closes" : weeklyPoints === null ? "Add consecutive totals to calculate this week" : "Calculated from your saved totals"],
     ["Active days", String(data.summary.activeDays), range === "total" ? "Across the campaign" : "Out of 7 days"],
     ["Markets traded", String(data.summary.markets), data.accountIndexes.length > 1 ? `Across ${data.accountIndexes.length} linked accounts` : "Across your linked account"],
   ] : [];
@@ -495,7 +503,7 @@ export default function Home() {
         <section className="empty-state"><span className="empty-icon">↗</span><h2>Explore your activity</h2><p>Paste your wallet to see weekly volume, points and markets.</p></section>
       ) : <>
         <section className="period-nav">
-          <div className="period-heading"><strong>{range === "total" ? "All-time campaign" : week === 0 ? "Current week" : `Campaign week ${currentCampaignWeek - week}`}</strong><span>{data ? formatPeriod(data.period.from, data.period.to) : "Loading period…"}</span></div>
+          <div className="period-heading"><strong>{range === "total" ? "All-time campaign" : week === 0 ? "Current week" : `Campaign week ${currentCampaignWeek - week}`}</strong><span>{data ? formatPeriod(data.period.from, data.period.to) : "Loading period…"}</span>{range === "week" && <em>Trading week: Wednesday–Tuesday · Points drop: Friday</em>}</div>
           <div className="period-selector">
             <button className={`period-button total ${range === "total" ? "active" : ""}`} onClick={() => selectPeriod(0, "total")}>Total</button>
             {weekOptions.map((offset) => <button className={`period-button ${range === "week" && week === offset ? "active" : ""}`} key={offset} onClick={() => selectPeriod(offset, "week")}>{offset === 0 ? "Current" : `Week ${currentCampaignWeek - offset}`}</button>)}

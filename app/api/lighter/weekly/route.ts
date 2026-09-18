@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const LIGHTER_BASE_URL = "https://api.rh.lighter.xyz";
 const EXPLORER_BASE_URL = "https://explorerapi.rh.lighter.xyz/api";
 const PROGRAM_START = Date.UTC(2026, 7, 10);
-const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 14, 18);
+const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 12);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_PAGES_PER_ACCOUNT = 30;
 const PAGE_BATCH_SIZE = 4;
@@ -82,10 +82,9 @@ function getTrade(log: ExplorerLog, accountIndexes: Set<string>): NormalizedTrad
 
 function currentWeekStart(now: Date) {
   const start = new Date(now);
-  const daysSinceFriday = (start.getUTCDay() - 5 + 7) % 7;
-  start.setUTCDate(start.getUTCDate() - daysSinceFriday);
-  start.setUTCHours(18, 0, 0, 0);
-  if (start.getTime() > now.getTime()) start.setUTCDate(start.getUTCDate() - 7);
+  const daysSinceWednesday = (start.getUTCDay() - 3 + 7) % 7;
+  start.setUTCDate(start.getUTCDate() - daysSinceWednesday);
+  start.setUTCHours(0, 0, 0, 0);
   return start.getTime();
 }
 
@@ -135,8 +134,10 @@ export async function GET(request: NextRequest) {
     if (!isTotal && week > maxWeekOffset) {
       return NextResponse.json({ success: false, error: `Week is outside the campaign. Maximum offset is ${maxWeekOffset}.` }, { status: 400 });
     }
-    const periodStart = isTotal ? PROGRAM_START : baseStart - week * WEEK_MS;
-    const periodEnd = isTotal || week === 0 ? now.getTime() : periodStart + WEEK_MS;
+    const regularPeriodStart = baseStart - week * WEEK_MS;
+    const isFirstCampaignWeek = !isTotal && week === maxWeekOffset;
+    const periodStart = isTotal ? PROGRAM_START : isFirstCampaignWeek ? PROGRAM_START : regularPeriodStart;
+    const periodEnd = isTotal || week === 0 ? now.getTime() : regularPeriodStart + WEEK_MS;
 
     const accountsResponse = await fetch(
       `${LIGHTER_BASE_URL}/api/v1/accountsByL1Address?l1_address=${encodeURIComponent(wallet)}`,
