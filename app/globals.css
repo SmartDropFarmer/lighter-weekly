@@ -60,8 +60,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .period-heading strong, .period-heading span { display: block; }
 .period-heading strong { margin-bottom: 6px; font-size: 12px; }
 .period-heading span { color: var(--muted); font-size: 8px; }
-.period-heading em { display: block; margin-top: 6px; color: var(--green); font-size: 7px; font-style: normal; letter-spacing: .04em; }
 .period-selector { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.points-window-note { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 11px 13px; border: 1px solid #405c49; border-radius: 6px; background: linear-gradient(90deg, rgba(30,55,36,.88), rgba(18,28,22,.72)); }
+.points-window-note span { flex: 0 0 auto; color: var(--lime); font-size: 8px; font-weight: 800; letter-spacing: .11em; }
+.points-window-note strong { color: #dce8de; font-size: 10px; line-height: 1.45; }
 .period-button { min-width: 62px; height: 29px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; color: #aeb4af; background: #14181e; font-size: 9px; font-weight: 700; }
 .period-button:hover { border-color: #53675a; color: var(--ink); }
 .period-button.active { border-color: var(--green); color: #07100a; background: var(--green); }
@@ -309,6 +311,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .hero h1 { font-size: 42px; }
   .detail-grid { grid-template-columns: 1fr; }
   .period-nav { grid-template-columns: 1fr; gap: 15px; }
+  .points-window-note { flex-direction: column; align-items: flex-start; gap: 5px; }
   .period-selector { justify-content: flex-start; }
   .points-tracker { grid-template-columns: 1fr; }
   .points-form { flex-wrap: wrap; }

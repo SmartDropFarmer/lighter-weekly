@@ -7,7 +7,7 @@ const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 12);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const REFERRAL_URL = "https://robinhoodchain.lighter.xyz/?referral=SMART&source=none";
 const TWITTER_URL = "https://x.com/SmartDropFarmer";
-const WEEKLY_STRATEGY_URL = "https://x.com/SmartDropFarmer/status/2098723160870801808?s=20";
+const WEEKLY_STRATEGY_URL = "https://x.com/SmartDropFarmer/status/2103429570590310733";
 const CRYPTO_LOADING_LINES = [
   "Checking whether the Lambo budget survived this week…",
   "Running the highly scientific $10B FDV scenario…",
@@ -503,11 +503,12 @@ export default function Home() {
         <section className="empty-state"><span className="empty-icon">↗</span><h2>Explore your activity</h2><p>Paste your wallet to see weekly volume, points and markets.</p></section>
       ) : <>
         <section className="period-nav">
-          <div className="period-heading"><strong>{range === "total" ? "All-time campaign" : week === 0 ? "Current week" : `Campaign week ${currentCampaignWeek - week}`}</strong><span>{data ? formatPeriod(data.period.from, data.period.to) : "Loading period…"}</span>{range === "week" && <em>Trading week: Wednesday–Tuesday · Points drop: Friday</em>}</div>
+          <div className="period-heading"><strong>{range === "total" ? "All-time campaign" : week === 0 ? "Current week" : `Campaign week ${currentCampaignWeek - week}`}</strong><span>{data ? formatPeriod(data.period.from, data.period.to) : "Loading period…"}</span></div>
           <div className="period-selector">
             <button className={`period-button total ${range === "total" ? "active" : ""}`} onClick={() => selectPeriod(0, "total")}>Total</button>
             {weekOptions.map((offset) => <button className={`period-button ${range === "week" && week === offset ? "active" : ""}`} key={offset} onClick={() => selectPeriod(offset, "week")}>{offset === 0 ? "Current" : `Week ${currentCampaignWeek - offset}`}</button>)}
           </div>
+          <div className="points-window-note"><span>HOW WEEKLY POINTS WORK</span><strong>Friday&apos;s points drop rewards the trading volume generated from Wednesday through Tuesday.</strong></div>
         </section>
 
         <section className="points-tracker">
