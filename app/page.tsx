@@ -7,7 +7,7 @@ const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 12);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const REFERRAL_URL = "https://robinhoodchain.lighter.xyz/?referral=SMART&source=none";
 const TWITTER_URL = "https://x.com/SmartDropFarmer";
-const WEEKLY_STRATEGY_URL = "https://x.com/SmartDropFarmer/status/2103429570590310733";
+const WEEKLY_STRATEGY_URL = "https://x.com/SmartDropFarmer/status/2114388209429873102";
 const CRYPTO_LOADING_LINES = [
   "Checking whether the Lambo budget survived this week…",
   "Running the highly scientific $10B FDV scenario…",
@@ -489,7 +489,7 @@ export default function Home() {
 
       <section className="hero">
         <div className="hero-copy"><p className="eyebrow creator-eyebrow"><span className="creator-mini-logo" />SMART DROP FARMER · WEEKLY</p><h1>Your trading,<br /><em>week by week.</em></h1><p className="intro">Track volume and points across every Robinhood Lighter campaign week.</p></div>
-        <a className="weekly-insight" href={WEEKLY_STRATEGY_URL} rel="noreferrer" target="_blank"><span className="weekly-insight-kicker"><i className="creator-mini-logo" />THIS WEEK&apos;S STRATEGY</span><strong>How I&apos;m approaching the current points week</strong><small>Read the latest breakdown from @SmartDropFarmer <b>↗</b></small></a>
+        <a className="weekly-insight" href={WEEKLY_STRATEGY_URL} rel="noreferrer" target="_blank"><span className="weekly-insight-kicker"><i className="creator-mini-logo" />LATEST LIGHTER UPDATE</span><strong>Why your points may be lower than expected</strong><small>Read the latest Lighter update from @SmartDropFarmer on X <b>↗</b></small></a>
         <form className="account-form" onSubmit={handleSubmit}>
           <label htmlFor="wallet">Wallet address</label>
           <div><input id="wallet" autoComplete="off" placeholder="0x…" type="text" value={walletInput} onChange={(event) => setWalletInput(event.target.value)} /><button type="submit">View stats</button></div>
