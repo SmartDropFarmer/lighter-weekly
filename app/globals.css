@@ -249,12 +249,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .share-logo { width: min(205px, 29cqw); height: 30px; display: block; background: url('/lighter-robinhood-lockup-transparent.png') left center / contain no-repeat; }
 .share-brand strong { padding: 5px 9px; border: 1px solid rgba(117,237,134,.42); border-radius: 4px; color: #e9f6ec; background: rgba(18,35,24,.62); font-size: clamp(9px, 1.65cqw, 13px); line-height: 1; text-transform: uppercase; letter-spacing: .08em; }
 .share-points { position: absolute !important; top: 34%; left: 6%; max-width: 53%; color: #54e9aa; font-family: var(--font-geist-mono), monospace; font-size: clamp(30px, 7.2cqw, 54px); line-height: .92; letter-spacing: -.06em; font-weight: 700; white-space: nowrap; }
-.share-estimate { position: absolute !important; top: 52%; left: 6%; display: grid; min-width: 31%; max-width: 55%; padding: 9px 11px; border: 1px solid rgba(117,237,134,.26); border-radius: 5px; background: rgba(5,10,8,.9); box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(5px); }
-.share-estimate > span:first-child { margin-bottom: 4px; color: #94a79a; font-size: clamp(6px, 1.05cqw, 8px); font-weight: 700; letter-spacing: .07em; }
+.share-estimate { position: absolute !important; top: 52%; left: 6%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 11px; min-width: 34%; max-width: 57%; padding: 9px 11px; border: 1px solid rgba(117,237,134,.26); border-radius: 5px; background: rgba(5,10,8,.9); box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(5px); }
+.share-estimate > span:first-child { grid-column: 1 / -1; margin-bottom: 4px; color: #94a79a; font-size: clamp(6px, 1.05cqw, 8px); font-weight: 700; letter-spacing: .07em; }
 .share-estimate > strong { color: #d9f6dd; font-family: var(--font-geist-mono), monospace; font-size: clamp(17px, 3.3cqw, 25px); letter-spacing: -.04em; }
-.share-point-price { display: flex; align-items: baseline; gap: 5px; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(117,237,134,.2); }
+.share-point-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding: 0 0 1px 10px; border-left: 1px solid rgba(117,237,134,.2); }
 .share-point-price small { color: #94a79a; font-size: clamp(5px, .9cqw, 7px); font-weight: 700; letter-spacing: .07em; }
-.share-point-price b { color: var(--lime); font-family: var(--font-geist-mono), monospace; font-size: clamp(13px, 2.3cqw, 18px); letter-spacing: -.04em; }
+.share-point-price b { color: var(--lime); font-family: var(--font-geist-mono), monospace; font-size: clamp(14px, 2.5cqw, 20px); letter-spacing: -.04em; }
 .share-stats { position: absolute !important; left: 6%; bottom: 14%; width: 58%; display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
 .share-stats > div { min-width: 0; padding: 8px 9px; border: 1px solid rgba(117,237,134,.24); border-radius: 5px; background: rgba(5,10,8,.9); box-shadow: 0 8px 22px rgba(0,0,0,.24); backdrop-filter: blur(5px); }
 .share-stats span, .share-stats strong { display: block; }
