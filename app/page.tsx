@@ -486,9 +486,12 @@ export default function Home() {
       context.fillStyle = "#d9f6dd";
       context.font = "700 34px Arial";
       context.fillText(cardEstimatedValue === null ? "PENDING" : compactMoney.format(cardEstimatedValue), 84, 382);
-      context.fillStyle = "#69716b";
-      context.font = "14px Arial";
-      context.fillText(`${money.format(dollarsPerPoint)} estimated per point`, 84, 407);
+      context.fillStyle = "#809087";
+      context.font = "700 12px Arial";
+      context.fillText("ESTIMATED PER POINT", 84, 408);
+      context.fillStyle = "#75ed86";
+      context.font = "700 22px Arial";
+      context.fillText(money.format(dollarsPerPoint), 84, 433);
     }
 
     const details = [
@@ -496,7 +499,7 @@ export default function Home() {
       ...(showTopMarket ? [["TOP MARKET", data.volumeByMarket[0]?.symbol ?? "—"]] : []),
       ...(showAverageTrade ? [["AVERAGE TRADE SIZE", money.format(data.summary.avgTradeSize)]] : []),
     ];
-    const detailY = showEstimatedValue ? 472 : 397;
+    const detailY = showEstimatedValue ? 490 : 397;
     const detailValueY = detailY + 45;
     const detailSlotWidth = details.length > 0 ? 610 / details.length : 610;
     details.forEach(([label, value], index) => {
@@ -639,7 +642,7 @@ export default function Home() {
             <span className="share-character" style={{ backgroundImage: `url(${activeCardImage})` }} />
             <div className="share-brand"><span className="share-logo" role="img" aria-label="Robinhood Chain and Lighter" /><strong>{periodTitle}</strong></div>
             <div className="share-points">{pointsValue === "Pending" ? "PENDING" : `${pointsValue} PTS`}</div>
-            {showEstimatedValue && <div className="share-estimate"><span>{priceScenario.toUpperCase()} ESTIMATED VALUE</span><strong>{cardEstimatedValue === null ? "PENDING" : compactMoney.format(cardEstimatedValue)}</strong><small>{money.format(dollarsPerPoint)} estimated per point</small></div>}
+            {showEstimatedValue && <div className="share-estimate"><span>{priceScenario.toUpperCase()} ESTIMATED VALUE</span><strong>{cardEstimatedValue === null ? "PENDING" : compactMoney.format(cardEstimatedValue)}</strong><span className="share-point-price"><small>PER POINT</small><b>{money.format(dollarsPerPoint)}</b></span></div>}
             {(showVolume || showTopMarket || showAverageTrade) && <div className="share-stats">{showVolume && <div><span>{range === "total" ? "TOTAL VOLUME" : "PERIOD VOLUME"}</span><strong>{compactMoney.format(data.summary.volume)}</strong></div>}{showTopMarket && <div><span>TOP MARKET</span><strong>{data.volumeByMarket[0]?.symbol ?? "—"}</strong></div>}{showAverageTrade && <div><span>AVERAGE TRADE SIZE</span><strong>{money.format(data.summary.avgTradeSize)}</strong></div>}</div>}
             {showPeriod && <small>{formatCardPeriod(data.period.from, data.period.to)}</small>}{showCreator && <b><span className="share-creator-logo" />Built by Smart Drop Farmer</b>}{showWallet && <em className="share-wallet">{data.wallet.slice(0, 6)}…{data.wallet.slice(-4)}</em>}
           </div>
