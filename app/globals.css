@@ -46,12 +46,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .drop-art span { position: absolute; z-index: 1; right: 13px; bottom: 11px; color: var(--lime); font-size: 8px; line-height: 1.35; letter-spacing: .18em; font-weight: 800; text-align: right; }
 .account-form { width: 100%; }
 .account-form label { display: block; margin-bottom: 8px; color: #a4aaa5; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.account-form div { display: flex; padding: 4px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
-.account-form input { min-width: 0; flex: 1; border: 0; outline: 0; padding: 0 9px; background: transparent; color: var(--ink); font-size: 11px; }
-.account-form button { border: 1px solid #82d688; border-radius: 5px; padding: 9px 13px; color: #07100a; background: var(--green); font-size: 10px; font-weight: 800; }
+.wallet-entry { display: flex; padding: 4px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.wallet-entry input { min-width: 0; flex: 1; border: 0; outline: 0; padding: 0 9px; background: transparent; color: var(--ink); font-size: 11px; }
+.wallet-entry button { border: 1px solid #82d688; border-radius: 5px; padding: 9px 13px; color: #07100a; background: var(--green); font-size: 10px; font-weight: 800; }
+.wallet-entry .save-wallet-button { margin-left: 4px; border-color: #465e4d; color: #b7c5b9; background: #151d18; }
+.wallet-entry .save-wallet-button:hover { border-color: var(--green); color: var(--lime); }
 .account-form > p { margin: 9px 2px 0; color: #6f7771; font-size: 8px; }
 .account-form > p a { color: var(--lime); font-weight: 700; }
 .account-form > p a:hover { text-decoration: underline; }
+.saved-wallets { display: flex; align-items: flex-start; gap: 8px; margin-top: 9px; color: #667068; font-size: 8px; }
+.saved-wallets > span { flex: 0 0 auto; padding-top: 5px; text-transform: uppercase; letter-spacing: .08em; }
+.saved-wallets > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.saved-wallet { display: flex; overflow: hidden; border: 1px solid #36453b; border-radius: 4px; background: #101713; }
+.saved-wallet button { border: 0; color: #bac6bc; background: transparent; font-family: var(--font-geist-mono), monospace; font-size: 8px; }
+.saved-wallet > button:first-child { padding: 5px 7px; }
+.saved-wallet > button:first-child:hover { color: var(--lime); background: #18251c; }
+.saved-wallet .remove-saved-wallet { padding: 4px 6px; border-left: 1px solid #36453b; color: #718078; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1; }
+.saved-wallet .remove-saved-wallet:hover { color: #ff9d96; background: #271617; }
 .empty-state { min-height: 300px; display: grid; place-content: center; justify-items: center; text-align: center; border: 1px solid var(--line); border-radius: 9px; background: rgba(15,18,23,.7); }
 .empty-icon { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 16px; border: 1px solid #52725a; border-radius: 50%; color: var(--lime); background: #142219; font-size: 17px; }
 .empty-state h2 { margin: 0 0 8px; font-size: 17px; letter-spacing: -.03em; }
@@ -154,6 +165,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scenario-controls select option { color: var(--ink); background: #11151a; }
 .scenario-controls b { flex: 0 0 auto; color: #7e8b82; font-size: 8px; font-weight: 600; }
 .scenario-controls .calculated-weeks { display: block; margin-top: 6px; color: #74b383; font-size: 7px; line-height: 1.25; }
+.scenario-stat { min-width: 0; }
+.scenario-stat > span, .scenario-stat > strong, .scenario-stat > small { display: block; }
+.scenario-stat > span { min-height: 25px; margin-bottom: 7px; color: #96a099; font-size: 8px; line-height: 1.25; text-transform: uppercase; letter-spacing: .055em; }
+.scenario-stat > strong { height: 36px; display: flex; align-items: center; padding: 0 10px; border: 1px solid #385445; border-radius: 5px; color: var(--lime); background: #0c1512; font-family: var(--font-geist-mono), monospace; font-size: 10px; }
+.scenario-stat > small { margin-top: 6px; color: #74b383; font-size: 7px; line-height: 1.25; }
 .point-value-result { display: flex; flex-direction: column; justify-content: center; padding: 20px; }
 .point-value-result > span { color: #85928a; font-size: 7px; letter-spacing: .12em; }
 .point-value-result > strong { display: block; margin: 9px 0 5px; color: #56d8c9; font-family: var(--font-geist-mono), monospace; font-size: clamp(38px, 4.5vw, 58px); line-height: .95; letter-spacing: -.07em; }
@@ -267,6 +283,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-scenario-settings select option { color: var(--ink); background: #11151a; }
 .card-scenario-settings b { flex: 0 0 auto; color: #657069; font-size: 7px; }
 .card-scenario-settings label > small { display: block; margin-top: 4px; color: #69a779; font-size: 7px; }
+.card-point-schedule > span, .card-point-schedule > strong, .card-point-schedule > small { display: block; }
+.card-point-schedule > span { margin-bottom: 5px; color: #727b75; font-size: 7px; text-transform: uppercase; letter-spacing: .05em; }
+.card-point-schedule > strong { height: 30px; display: flex; align-items: center; padding: 0 8px; border: 1px solid #355442; border-radius: 4px; color: var(--lime); background: #0e1215; font-family: var(--font-geist-mono), monospace; font-size: 8px; }
+.card-point-schedule > small { display: block; margin-top: 4px; color: #69a779; font-size: 7px; }
 .share-toggle { display: flex; align-items: center; justify-content: space-between; margin: 14px 0; padding: 11px 12px; border: 1px solid #292e36; border-radius: 6px; background: #15181e; }
 .share-toggle span strong, .share-toggle span small { display: block; }
 .share-toggle span strong { margin-bottom: 3px; font-size: 10px; }

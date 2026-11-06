@@ -2,9 +2,13 @@
 
 import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const PROGRAM_START = Date.UTC(2026, 7, 10);
 const WEEKLY_CAMPAIGN_START = Date.UTC(2026, 7, 12);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const FIRST_POINTS_DISTRIBUTION = Date.UTC(2026, 7, 21);
+const INITIAL_WEEKLY_POINTS = 65_000;
+const WEEKLY_POINTS_INCREASE = 5_000;
+const SAVED_WALLETS_STORAGE_KEY = "lighter-saved-wallets-v1";
+const MAX_SAVED_WALLETS = 6;
 const REFERRAL_URL = "https://robinhoodchain.lighter.xyz/?referral=SMART&source=none";
 const TWITTER_URL = "https://x.com/SmartDropFarmer";
 const WEEKLY_STRATEGY_URL = "https://x.com/SmartDropFarmer/status/2114388209429873102";
@@ -32,12 +36,12 @@ const SHARE_BACKGROUNDS = [
 
 type MarketVolume = { marketId: number; symbol: string; volume: number };
 type PriceScenario = "bearish" | "neutral" | "bullish";
-type ScenarioInputs = { litPrice: number; endMonth: string; poolLit: number; weeklyPoints: number };
+type ScenarioInputs = { litPrice: number; endMonth: string; poolLit: number };
 
 const PRICE_SCENARIOS: Record<Exclude<PriceScenario, "custom">, ScenarioInputs & { label: string; note: string }> = {
-  bearish: { label: "Bearish", note: "Lower LIT price · longer campaign", litPrice: 3, endMonth: "2027-08", poolLit: 11_000_000, weeklyPoints: 72_500 },
-  neutral: { label: "Neutral", note: "Base case · campaign ends January", litPrice: 4.5, endMonth: "2027-01", poolLit: 11_000_000, weeklyPoints: 72_500 },
-  bullish: { label: "Bullish", note: "Higher LIT price · campaign ends January", litPrice: 7, endMonth: "2027-01", poolLit: 11_000_000, weeklyPoints: 72_500 },
+  bearish: { label: "Bearish", note: "Lower LIT price · longer campaign", litPrice: 3, endMonth: "2027-08", poolLit: 11_000_000 },
+  neutral: { label: "Neutral", note: "Base case · campaign ends January", litPrice: 4.5, endMonth: "2027-01", poolLit: 11_000_000 },
+  bullish: { label: "Bullish", note: "Higher LIT price · campaign ends January", litPrice: 7, endMonth: "2027-01", poolLit: 11_000_000 },
 };
 type WeeklyData = {
   success: true;
@@ -69,7 +73,20 @@ function weeksUntilMonthEnd(endMonth: string) {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const firstDayAfterMonth = Date.UTC(year, month, 1);
-  return Math.max(1, Math.ceil((firstDayAfterMonth - PROGRAM_START) / WEEK_MS));
+  return Math.max(1, Math.ceil((firstDayAfterMonth - FIRST_POINTS_DISTRIBUTION) / WEEK_MS));
+}
+
+function totalDistributedPoints(distributionWeeks: number) {
+  return distributionWeeks * (2 * INITIAL_WEEKLY_POINTS + (distributionWeeks - 1) * WEEKLY_POINTS_INCREASE) / 2;
+}
+
+function weeklyDistributionFor(date = Date.now()) {
+  const distributionIndex = Math.max(0, Math.floor((date - FIRST_POINTS_DISTRIBUTION) / WEEK_MS));
+  return INITIAL_WEEKLY_POINTS + distributionIndex * WEEKLY_POINTS_INCREASE;
+}
+
+function shortWallet(address: string) {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 function formatPeriod(from: string, to: string) {
@@ -97,6 +114,7 @@ function formatCardPeriod(from: string, to: string) {
 export default function Home() {
   const [walletInput, setWalletInput] = useState("");
   const [wallet, setWallet] = useState<string | null>(null);
+  const [savedWallets, setSavedWallets] = useState<string[]>([]);
   const [week, setWeek] = useState(0);
   const [range, setRange] = useState<"week" | "total">("week");
   const [data, setData] = useState<WeeklyData | null>(null);
@@ -124,9 +142,9 @@ export default function Home() {
   const shareDialogRef = useRef<HTMLDivElement>(null);
   const [priceScenario, setPriceScenario] = useState<PriceScenario>("neutral");
   const [scenarioValues, setScenarioValues] = useState<Record<PriceScenario, ScenarioInputs>>({
-    bearish: { litPrice: 3, endMonth: "2027-08", poolLit: 11_000_000, weeklyPoints: 72_500 },
-    neutral: { litPrice: 4.5, endMonth: "2027-01", poolLit: 11_000_000, weeklyPoints: 72_500 },
-    bullish: { litPrice: 7, endMonth: "2027-01", poolLit: 11_000_000, weeklyPoints: 72_500 },
+    bearish: { litPrice: 3, endMonth: "2027-08", poolLit: 11_000_000 },
+    neutral: { litPrice: 4.5, endMonth: "2027-01", poolLit: 11_000_000 },
+    bullish: { litPrice: 7, endMonth: "2027-01", poolLit: 11_000_000 },
   });
 
   useEffect(() => {
@@ -144,6 +162,17 @@ export default function Home() {
     shareDialogRef.current?.focus();
     return () => { document.body.style.overflow = previousOverflow; };
   }, [shareOpen]);
+
+  useEffect(() => {
+    try {
+      const storedWallets = JSON.parse(window.localStorage.getItem(SAVED_WALLETS_STORAGE_KEY) ?? "[]") as unknown;
+      if (!Array.isArray(storedWallets)) return;
+      const validWallets = storedWallets.filter((entry): entry is string => typeof entry === "string" && /^0x[a-fA-F0-9]{40}$/.test(entry));
+      setSavedWallets([...new Map(validWallets.map((entry) => [entry.toLowerCase(), entry])).values()].slice(0, MAX_SAVED_WALLETS));
+    } catch {
+      setSavedWallets([]);
+    }
+  }, []);
 
   const loadPeriod = useCallback(async (address: string, selectedWeek: number, selectedRange: "week" | "total") => {
     const startedAt = Date.now();
@@ -174,13 +203,8 @@ export default function Home() {
     }
   }, []);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const address = walletInput.trim();
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      setError("Enter a valid wallet address starting with 0x.");
-      return;
-    }
+  function openWallet(address: string) {
+    setWalletInput(address);
     setWallet(address);
     setWeek(0);
     setRange("week");
@@ -195,6 +219,38 @@ export default function Home() {
       setPointSnapshots({});
     }
     void loadPeriod(address, 0, "week");
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const address = walletInput.trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      setError("Enter a valid wallet address starting with 0x.");
+      return;
+    }
+    openWallet(address);
+  }
+
+  function saveWallet() {
+    const address = walletInput.trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      setError("Enter a valid wallet address before saving it.");
+      return;
+    }
+    setSavedWallets((current) => {
+      const next = [address, ...current.filter((entry) => entry.toLowerCase() !== address.toLowerCase())].slice(0, MAX_SAVED_WALLETS);
+      window.localStorage.setItem(SAVED_WALLETS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+    setError("");
+  }
+
+  function removeSavedWallet(address: string) {
+    setSavedWallets((current) => {
+      const next = current.filter((entry) => entry.toLowerCase() !== address.toLowerCase());
+      window.localStorage.setItem(SAVED_WALLETS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
   }
 
   function selectPeriod(selectedWeek: number, selectedRange: "week" | "total") {
@@ -345,7 +401,9 @@ export default function Home() {
     : week === 0 ? "Current week" : `Week ${selectedCampaignWeek}`;
   const scenarioInputs = scenarioValues[priceScenario];
   const durationWeeks = weeksUntilMonthEnd(scenarioInputs.endMonth);
-  const projectedProgramPoints = durationWeeks * scenarioInputs.weeklyPoints;
+  const projectedProgramPoints = totalDistributedPoints(durationWeeks);
+  const currentWeeklyDistribution = weeklyDistributionFor();
+  const averageWeeklyDistribution = projectedProgramPoints / durationWeeks;
   const litPerPoint = projectedProgramPoints > 0 ? scenarioInputs.poolLit / projectedProgramPoints : 0;
   const dollarsPerPoint = litPerPoint * scenarioInputs.litPrice;
   const pointsToValue = latestPoints ?? 0;
@@ -355,7 +413,7 @@ export default function Home() {
   const cardEstimatedValue = cardPointNumber === null ? null : cardPointNumber * dollarsPerPoint;
   const scenarioEstimates = (Object.keys(PRICE_SCENARIOS) as PriceScenario[]).map((scenario) => {
     const inputs = scenarioValues[scenario];
-    const projectedPoints = weeksUntilMonthEnd(inputs.endMonth) * inputs.weeklyPoints;
+    const projectedPoints = totalDistributedPoints(weeksUntilMonthEnd(inputs.endMonth));
     const pointValue = projectedPoints > 0 ? (inputs.poolLit / projectedPoints) * inputs.litPrice : 0;
     return { scenario, label: PRICE_SCENARIOS[scenario].label, pointValue, totalValue: cardPointNumber === null ? null : cardPointNumber * pointValue };
   });
@@ -492,8 +550,9 @@ export default function Home() {
         <a className="weekly-insight" href={WEEKLY_STRATEGY_URL} rel="noreferrer" target="_blank"><span className="weekly-insight-kicker"><i className="creator-mini-logo" />LATEST LIGHTER UPDATE</span><strong>Why your points may be lower than expected</strong><small>Read the latest Lighter update from @SmartDropFarmer on X <b>↗</b></small></a>
         <form className="account-form" onSubmit={handleSubmit}>
           <label htmlFor="wallet">Wallet address</label>
-          <div><input id="wallet" autoComplete="off" placeholder="0x…" type="text" value={walletInput} onChange={(event) => setWalletInput(event.target.value)} /><button type="submit">View stats</button></div>
+          <div className="wallet-entry"><input id="wallet" autoComplete="off" placeholder="0x…" type="text" value={walletInput} onChange={(event) => setWalletInput(event.target.value)} /><button type="submit">View stats</button><button className="save-wallet-button" onClick={saveWallet} type="button">Save wallet</button></div>
           <p>New to Robinhood Lighter? <a href={REFERRAL_URL} rel="noreferrer" target="_blank">Join with code SMART ↗</a> <span>· Referral link; the creator may benefit.</span></p>
+          {savedWallets.length > 0 && <div className="saved-wallets"><span>Saved wallets</span><div>{savedWallets.map((savedWallet) => <div className="saved-wallet" key={savedWallet.toLowerCase()}><button aria-label={`Open ${shortWallet(savedWallet)}`} onClick={() => openWallet(savedWallet)} type="button">{shortWallet(savedWallet)}</button><button aria-label={`Remove ${shortWallet(savedWallet)}`} className="remove-saved-wallet" onClick={() => removeSavedWallet(savedWallet)} type="button">×</button></div>)}</div></div>}
         </form>
       </section>
 
@@ -536,26 +595,26 @@ export default function Home() {
             {metrics.map(([label, value, note]) => <article className="metric" key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}
           </section>
           <section className="points-desk">
-            <div className="points-desk-heading"><div><p className="eyebrow">POINT VALUE LAB</p><h2>What could one point be worth?</h2><p>Explore hypothetical outcomes using the 11M LIT community pool and an estimated 72,500 points distributed each week.</p></div><span>ESTIMATE · NOT A GUARANTEE</span></div>
+            <div className="points-desk-heading"><div><p className="eyebrow">POINT VALUE LAB</p><h2>What could one point be worth?</h2><p>Explore hypothetical outcomes using the 11M LIT community pool and a weekly distribution that began at 65,000 points on 21 August 2026 and rises by 5,000 each week.</p></div><span>ESTIMATE · NOT A GUARANTEE</span></div>
             <div className="scenario-tabs">
               {(Object.keys(PRICE_SCENARIOS) as PriceScenario[]).map((scenario) => <button className={priceScenario === scenario ? "active" : ""} key={scenario} onClick={() => setPriceScenario(scenario)}><strong>{PRICE_SCENARIOS[scenario].label}</strong><small>{PRICE_SCENARIOS[scenario].note}</small></button>)}
             </div>
             <div className="points-desk-grid">
               <div className="scenario-controls">
-                <label><span>Campaign end month</span><div><select onChange={(event) => updateScenario("endMonth", event.target.value)} value={scenarioInputs.endMonth}>{END_MONTH_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><small className="calculated-weeks">{durationWeeks} weeks from campaign start</small></label>
+                <label><span>Campaign end month</span><div><select onChange={(event) => updateScenario("endMonth", event.target.value)} value={scenarioInputs.endMonth}>{END_MONTH_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><small className="calculated-weeks">{durationWeeks} distributions from 21 Aug 2026</small></label>
                 <label><span>Estimated LIT price</span><div><b>$</b><input inputMode="decimal" min="0" onChange={(event) => updateScenario("litPrice", event.target.value)} step="0.01" type="number" value={scenarioInputs.litPrice} /></div></label>
                 <label><span>Community pool</span><div><input inputMode="numeric" min="0" onChange={(event) => updateScenario("poolLit", event.target.value)} type="number" value={scenarioInputs.poolLit} /><b>LIT</b></div></label>
-                <label><span>Points distributed weekly</span><div><input inputMode="numeric" min="1" onChange={(event) => updateScenario("weeklyPoints", event.target.value)} type="number" value={scenarioInputs.weeklyPoints} /><b>pts</b></div></label>
+                <div className="scenario-stat"><span>Current weekly distribution</span><strong>{compactNumber(currentWeeklyDistribution)} pts</strong><small>65k first drop · +5k every week</small></div>
               </div>
               <div className="point-value-result"><span>ONE POINT COULD BE WORTH</span><strong>{money.format(dollarsPerPoint)}</strong><p>≈ {litPerPoint.toLocaleString("en-US", { maximumFractionDigits: 3 })} LIT per point</p><small>11M LIT ÷ {compactNumber(projectedProgramPoints)} projected program points</small></div>
               <div className="estimate-breakdown">
-                <div><span>Projected points issued</span><strong>{compactNumber(projectedProgramPoints)}</strong></div>
+                <div><span>Projected points issued</span><strong>{compactNumber(projectedProgramPoints)}</strong><small>{compactNumber(averageWeeklyDistribution)} weekly average</small></div>
                 <div><span>Pool value</span><strong>{compactMoney.format(scenarioInputs.poolLit * scenarioInputs.litPrice)}</strong></div>
                 <div><span>Your saved points</span><strong>{latestPoints === null ? "Not added" : compactNumber(pointsToValue)}</strong></div>
                 <div><span>Your hypothetical value</span><strong>{latestPoints === null ? "—" : compactMoney.format(estimatedUserValue)}</strong><small>{latestPoints === null ? "Save a cumulative points total above" : `≈ ${estimatedUserLit.toLocaleString("en-US", { maximumFractionDigits: 2 })} LIT`}</small></div>
               </div>
             </div>
-            <div className="points-desk-note"><b>Known:</b> Lighter announced an 11M LIT allocation to the Robinhood community. <b>Assumptions:</b> token price, campaign duration and future weekly point issuance. Robinhood Wallet&apos;s 2× earning rate changes how quickly users earn points, not this estimated redemption value per point. Updated September 2026. For information only — not financial advice and not a guaranteed token allocation or valuation.</div>
+            <div className="points-desk-note"><b>Known:</b> Lighter announced an 11M LIT allocation to the Robinhood community. <b>Distribution model:</b> 65,000 points on the first distribution of 21 August 2026, increasing by 5,000 each week. <b>Assumptions:</b> token price and campaign end date. Robinhood Wallet&apos;s 2× earning rate changes how quickly users earn points, not this estimated redemption value per point. For information only — not financial advice and not a guaranteed token allocation or valuation.</div>
           </section>
           <section className="detail-grid">
             <article className="panel markets-panel">
@@ -593,7 +652,7 @@ export default function Home() {
             <button aria-pressed={showCreator} className={showCreator ? "active" : ""} onClick={() => setShowCreator((value) => !value)}>Creator credit</button>
             <button aria-pressed={showWallet} className={showWallet ? "active" : ""} onClick={() => setShowWallet((value) => !value)}>Wallet</button>
           </div></div>
-          <div className="card-scenario-picker"><span>VALUE SCENARIO</span><div>{(Object.keys(PRICE_SCENARIOS) as PriceScenario[]).map((scenario) => <button className={priceScenario === scenario ? "active" : ""} key={scenario} onClick={() => setPriceScenario(scenario)}>{PRICE_SCENARIOS[scenario].label}<small>{money.format(scenarioValues[scenario].litPrice)} · {weeksUntilMonthEnd(scenarioValues[scenario].endMonth)}w</small></button>)}</div><div className="card-scenario-settings"><label><span>LIT price</span><div><b>$</b><input min="0" onChange={(event) => updateScenario("litPrice", event.target.value)} step="0.1" type="number" value={scenarioInputs.litPrice} /></div></label><label><span>End month</span><div><select onChange={(event) => updateScenario("endMonth", event.target.value)} value={scenarioInputs.endMonth}>{END_MONTH_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><small>{durationWeeks} weeks total</small></label><label><span>Weekly points</span><div><input min="1" onChange={(event) => updateScenario("weeklyPoints", event.target.value)} type="number" value={scenarioInputs.weeklyPoints} /><b>pts</b></div></label></div></div>
+          <div className="card-scenario-picker"><span>VALUE SCENARIO</span><div>{(Object.keys(PRICE_SCENARIOS) as PriceScenario[]).map((scenario) => <button className={priceScenario === scenario ? "active" : ""} key={scenario} onClick={() => setPriceScenario(scenario)}>{PRICE_SCENARIOS[scenario].label}<small>{money.format(scenarioValues[scenario].litPrice)} · {weeksUntilMonthEnd(scenarioValues[scenario].endMonth)}w</small></button>)}</div><div className="card-scenario-settings"><label><span>LIT price</span><div><b>$</b><input min="0" onChange={(event) => updateScenario("litPrice", event.target.value)} step="0.1" type="number" value={scenarioInputs.litPrice} /></div></label><label><span>End month</span><div><select onChange={(event) => updateScenario("endMonth", event.target.value)} value={scenarioInputs.endMonth}>{END_MONTH_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><small>{durationWeeks} distributions total</small></label><div className="card-point-schedule"><span>Point schedule</span><strong>{compactNumber(currentWeeklyDistribution)} pts</strong><small>65k start · +5k weekly</small></div></div></div>
           <div className="background-picker"><span>CARD STYLE · AUTO-SELECTED BY POINTS</span><div>{SHARE_BACKGROUNDS.map((backgroundOption) => <button aria-label={backgroundOption.label} aria-pressed={selectedBackground.id === backgroundOption.id} className={selectedBackground.id === backgroundOption.id ? "active" : ""} key={backgroundOption.id} onClick={() => setShareBackground(backgroundOption.src)} style={{ backgroundImage: `url(${backgroundOption.thumb})` }} />)}</div></div>
           <div className="custom-image-control">
             <div><strong>Custom artwork</strong><small>PNG, JPEG or WebP · Maximum 5 MB · Processed locally</small></div>
